@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>米うさぎ赤軍</title>
+<style>
+body{margin:0;background:#cc0000;color:#ffd700;font-family:Arial,sans-serif}
+header{text-align:center;padding:20px}
+h1{margin:0}
+nav{background:#990000;padding:10px;text-align:center}
+nav a{color:white;margin:0 10px;text-decoration:none}
+.page{display:none;padding:20px}
+.active{display:block}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.article{padding:10px}
+.article h3{color:white}
+.article a{color:white}
+input,textarea{width:100%;padding:8px;margin:5px 0;box-sizing:border-box}
+button{padding:10px}
+#editor{display:none;background:#fff;color:#000;padding:15px}
+#warning{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;justify-content:center;align-items:center}
+#warningBox{background:white;color:black;padding:20px;border-radius:10px;max-width:500px;text-align:center}
+</style>
+</head>
+<body>
+
+<div id="warning">
+<div id="warningBox">
+<h2>注意</h2>
+<p>このサイトはフィクションです。実在の人物・団体とは関係ありません。</p>
+<button onclick="document.getElementById('warning').style.display='none'">同意する</button>
+</div>
+</div>
+
+<header>
+<h1>米うさぎ赤軍</h1>
+<h2>最新の記事</h2>
+</header>
+
+<nav>
+<a href="#" onclick="showPage('home')">ホーム</a>
+<a href="#" onclick="showPage('post')">主席日記投稿</a>
+<a href="#" onclick="showPage('login')">ログイン</a>
+</nav>
+
+<section id="home" class="page active">
+<div id="articles" class="grid"></div>
+</section>
+
+<section id="post" class="page">
+<h2>記事投稿</h2>
+<div id="editor">
+<label>記事タイトル</label>
+<input id="title">
+
+<label>投稿者名</label>
+<input id="author">
+
+<label>日時</label>
+<input id="date" type="datetime-local">
+
+<label>内容</label>
+<textarea id="content" rows="10"></textarea>
+
+<button onclick="saveArticle()">投稿</button>
+</div>
+<p id="loginNeed">ログインしてください。</p>
+</section>
+
+<section id="login" class="page">
+<h2>ログイン</h2>
+<input id="user" placeholder="ユーザー名">
+<input id="pass" type="password" placeholder="パスワード">
+<button onclick="login()">ログイン</button>
+<p id="result"></p>
+</section>
+
+<script>
+function showPage(id){
+ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+ document.getElementById(id).classList.add('active');
+}
+
+function login(){
+ let u=document.getElementById('user').value;
+ let p=document.getElementById('pass').value;
+
+ if(u==='yeahbrouiui' && p==='0306'){
+   localStorage.setItem('loggedIn','yes');
+   document.getElementById('editor').style.display='block';
+   document.getElementById('loginNeed').style.display='none';
+   document.getElementById('result').innerText='ログイン成功';
+ }else{
+   document.getElementById('result').innerText='ログイン失敗';
+ }
+}
+
+function saveArticle(){
+ let articles=JSON.parse(localStorage.getItem('articles')||'[]');
+
+ articles.unshift({
+   title:document.getElementById('title').value,
+   author:document.getElementById('author').value,
+   date:document.getElementById('date').value,
+   content:document.getElementById('content').value
+ });
+
+ localStorage.setItem('articles',JSON.stringify(articles));
+ renderArticles();
+}
+
+function renderArticles(){
+ let articles=JSON.parse(localStorage.getItem('articles')||'[]');
+ let html='';
+
+ articles.forEach(a=>{
+   let shortText=a.content.substring(0,120);
+
+   html+=`
+   <div class="article">
+      <h3>${a.title}</h3>
+      <b>投稿者: ${a.author}</b><br>
+      <b>${a.date}</b><br><br>
+      ${shortText}...
+   </div>`;
+ });
+
+ document.getElementById('articles').innerHTML=html;
+}
+
+window.onload=function(){
+ renderArticles();
+
+ if(localStorage.getItem('loggedIn')==='yes'){
+   document.getElementById('editor').style.display='block';
+   document.getElementById('loginNeed').style.display='none';
+ }
+}
+</script>
+
+</body>
+</html>
