@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -18,8 +17,8 @@ body{
 
 header{
     background:#8b0000;
-    padding:20px;
     text-align:center;
+    padding:20px;
 }
 
 header h1{
@@ -31,15 +30,15 @@ nav{
     padding:10px;
     display:flex;
     justify-content:center;
-    gap:20px;
+    gap:15px;
 }
 
 nav button{
     background:none;
     border:none;
     color:white;
-    cursor:pointer;
     font-size:16px;
+    cursor:pointer;
 }
 
 .page{
@@ -98,10 +97,10 @@ button{
     color:black;
     padding:20px;
     border-radius:10px;
+    margin-top:20px;
 }
 
 </style>
-
 </head>
 
 <body>
@@ -134,8 +133,7 @@ button{
 
 <h2>最新記事</h2>
 
-<div id="articleList" class="grid">
-</div>
+<div id="articleList" class="grid"></div>
 
 </section>
 
@@ -145,11 +143,14 @@ button{
 
 <div id="editor" class="admin-only">
 
-<label>タイトル</label> <input id="title">
+<label>タイトル</label>
+<input id="title">
 
-<label>投稿者</label> <input id="author">
+<label>投稿者</label>
+<input id="author">
 
-<label>画像URL</label> <input id="image">
+<label>画像URL</label>
+<input id="image">
 
 <label>本文</label>
 
@@ -171,9 +172,11 @@ button{
 
 <div id="enemyEditor" class="admin-only">
 
-<label>組織名</label> <input id="enemyName">
+<label>組織名</label>
+<input id="enemyName">
 
-<label>画像URL</label> <input id="enemyImage">
+<label>画像URL</label>
+<input id="enemyImage">
 
 <label>説明</label>
 
@@ -197,7 +200,8 @@ button{
 
 <input id="user" placeholder="ユーザー名">
 
-<input id="pass"
+<input
+id="pass"
 type="password"
 placeholder="パスワード">
 
@@ -207,8 +211,7 @@ placeholder="パスワード">
 
 <p id="loginResult"></p>
 
-</section>
-<script type="module">
+</section><script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
 
@@ -238,8 +241,8 @@ window.showPage = function(page){
 
   document
     .querySelectorAll(".page")
-    .forEach(p=>{
-      p.classList.remove("active");
+    .forEach(pageElement=>{
+      pageElement.classList.remove("active");
     });
 
   document
@@ -267,19 +270,19 @@ window.login = function(){
 
     document
       .querySelectorAll(".admin-only")
-      .forEach(e=>{
-        e.style.display="block";
+      .forEach(item=>{
+        item.style.display = "block";
       });
 
     document
       .getElementById("loginResult")
-      .textContent="ログイン成功";
+      .textContent = "ログイン成功";
 
   }else{
 
     document
       .getElementById("loginResult")
-      .textContent="ログイン失敗";
+      .textContent = "ログイン失敗";
   }
 };
 
@@ -323,6 +326,11 @@ window.saveArticle = function(){
       article
     );
   }
+
+  document.getElementById("title").value="";
+  document.getElementById("author").value="";
+  document.getElementById("image").value="";
+  document.getElementById("content").value="";
 };
 
 window.saveEnemy = function(){
@@ -344,6 +352,10 @@ window.saveEnemy = function(){
         new Date().toLocaleString()
     }
   );
+
+  document.getElementById("enemyName").value="";
+  document.getElementById("enemyImage").value="";
+  document.getElementById("enemyDescription").value="";
 };
 
 window.onload = function(){
@@ -355,212 +367,177 @@ window.onload = function(){
 
     document
       .querySelectorAll(".admin-only")
-      .forEach(e=>{
-        e.style.display="block";
+      .forEach(item=>{
+        item.style.display="block";
       });
   }
 };
-onValue(
-ref(db,"articles"),
-(snapshot)=>{
+    onValue(
+  ref(db,"articles"),
+  (snapshot)=>{
 
-```
-const data =
-  snapshot.val() || {};
+    const data = snapshot.val() || {};
 
-let html = "";
+    let html = "";
 
-Object.entries(data)
-  .reverse()
-  .forEach(([id,item])=>{
+    Object.entries(data)
+      .reverse()
+      .forEach(([id,item])=>{
 
-  html += `
-  <div class="card">
+      html += `
+      <div class="card">
 
-    <img
-    src="${item.image}"
-    onerror="this.style.display='none'">
+        <img
+        src="${item.image}"
+        onerror="this.style.display='none'">
 
-    <div class="card-content">
+        <div class="card-content">
 
-      <h3>${item.title}</h3>
+          <h3>${item.title}</h3>
+
+          <p>投稿者: ${item.author}</p>
+
+          <p>${item.createdAt}</p>
+
+          <p>
+          ${item.content.substring(0,100)}
+          ...
+          </p>
+
+          <button onclick="readArticle('${id}')">
+          続きを読む
+          </button>
+
+          <button onclick="editArticle('${id}')">
+          編集
+          </button>
+
+          <button onclick="deleteArticle('${id}')">
+          削除
+          </button>
+
+        </div>
+
+      </div>
+      `;
+    });
+
+    document.getElementById("articleList").innerHTML = html;
+  }
+);
+
+window.readArticle = function(id){
+
+  onValue(
+    ref(db,"articles/"+id),
+    (snapshot)=>{
+
+      const item = snapshot.val();
+
+      const view =
+        document.getElementById("articleView");
+
+      view.style.display = "block";
+
+      view.innerHTML = `
+
+      <h2>${item.title}</h2>
 
       <p>投稿者: ${item.author}</p>
 
       <p>${item.createdAt}</p>
 
-      <p>
-      ${item.content.substring(0,100)}
-      ...
-      </p>
+      <img
+      src="${item.image}"
+      style="
+      width:100%;
+      max-width:700px;
+      ">
 
-      <button onclick="readArticle('${id}')">
-      続きを読む
-      </button>
+      <hr>
 
-      <button onclick="editArticle('${id}')">
-      編集
-      </button>
+      <p>${item.content}</p>
 
-      <button onclick="deleteArticle('${id}')">
-      削除
-      </button>
-
-    </div>
-
-  </div>
-  `;
-});
-
-document
-  .getElementById("articleList")
-  .innerHTML = html;
-```
-
-}
-);
-
-window.readArticle = function(id){
-
-onValue(
-ref(db,"articles/"+id),
-(snapshot)=>{
-
-```
-  const item = snapshot.val();
-
-  const view =
-    document.getElementById(
-      "articleView"
-    );
-
-  view.style.display="block";
-
-  view.innerHTML = `
-
-  <h2>${item.title}</h2>
-
-  <p>
-  投稿者:
-  ${item.author}
-  </p>
-
-  <p>
-  ${item.createdAt}
-  </p>
-
-  <img
-  src="${item.image}"
-  style="
-  width:100%;
-  max-width:700px;
-  ">
-
-  <hr>
-
-  <p>
-  ${item.content}
-  </p>
-  `;
-},
-{onlyOnce:true}
-```
-
-);
+      `;
+    },
+    { onlyOnce:true }
+  );
 };
 
 window.editArticle = function(id){
 
-onValue(
-ref(db,"articles/"+id),
-(snapshot)=>{
+  onValue(
+    ref(db,"articles/"+id),
+    (snapshot)=>{
 
-```
-  const item =
-    snapshot.val();
+      const item = snapshot.val();
 
-  document
-    .getElementById("title")
-    .value = item.title;
+      document.getElementById("title").value =
+        item.title;
 
-  document
-    .getElementById("author")
-    .value = item.author;
+      document.getElementById("author").value =
+        item.author;
 
-  document
-    .getElementById("image")
-    .value = item.image;
+      document.getElementById("image").value =
+        item.image;
 
-  document
-    .getElementById("content")
-    .value = item.content;
+      document.getElementById("content").value =
+        item.content;
 
-  window.currentEditId = id;
+      window.currentEditId = id;
 
-  showPage("diary");
-},
-{onlyOnce:true}
-```
-
-);
+      showPage("diary");
+    },
+    { onlyOnce:true }
+  );
 };
 
 window.deleteArticle = function(id){
 
-if(
-confirm(
-"この記事を削除しますか？"
-)
-){
+  if(
+    confirm("この記事を削除しますか？")
+  ){
 
-```
-remove(
-  ref(db,"articles/"+id)
-);
-```
-
-}
+    remove(
+      ref(db,"articles/"+id)
+    );
+  }
 };
 
 onValue(
-ref(db,"enemies"),
-(snapshot)=>{
+  ref(db,"enemies"),
+  (snapshot)=>{
 
-```
-const data =
-  snapshot.val() || {};
+    const data = snapshot.val() || {};
 
-let html = "";
+    let html = "";
 
-Object.entries(data)
-  .reverse()
-  .forEach(([id,item])=>{
+    Object.entries(data)
+      .reverse()
+      .forEach(([id,item])=>{
 
-  html += `
-  <div class="card">
+      html += `
+      <div class="card">
 
-    <img
-    src="${item.image}"
-    onerror="this.style.display='none'">
+        <img
+        src="${item.image}"
+        onerror="this.style.display='none'">
 
-    <div class="card-content">
+        <div class="card-content">
 
-      <h3>${item.name}</h3>
+          <h3>${item.name}</h3>
 
-      <p>${item.description}</p>
+          <p>${item.description}</p>
 
-    </div>
+        </div>
 
-  </div>
-  `;
-});
+      </div>
+      `;
+    });
 
-document
-  .getElementById("enemyList")
-  .innerHTML = html;
-```
-
-}
+    document.getElementById("enemyList").innerHTML =
+      html;
+  }
 );
 
 </script>
