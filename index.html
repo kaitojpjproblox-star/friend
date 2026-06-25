@@ -1,143 +1,588 @@
 <!DOCTYPE html>
+
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>米うさぎ赤軍</title>
+
 <style>
-body{margin:0;background:#cc0000;color:#ffd700;font-family:Arial,sans-serif}
-header{text-align:center;padding:20px}
-h1{margin:0}
-nav{background:#990000;padding:10px;text-align:center}
-nav a{color:white;margin:0 10px;text-decoration:none}
-.page{display:none;padding:20px}
-.active{display:block}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
-.article{padding:10px}
-.article h3{color:white}
-.article a{color:white}
-input,textarea{width:100%;padding:8px;margin:5px 0;box-sizing:border-box}
-button{padding:10px}
-#editor{display:none;background:#fff;color:#000;padding:15px}
-#warning{position:fixed;inset:0;background:rgba(0,0,0,.85);display:flex;justify-content:center;align-items:center}
-#warningBox{background:white;color:black;padding:20px;border-radius:10px;max-width:500px;text-align:center}
+body{
+    margin:0;
+    background:#b30000;
+    color:#ffd700;
+    font-family:sans-serif;
+}
+
+header{
+    background:#8b0000;
+    padding:20px;
+    text-align:center;
+}
+
+nav{
+    background:#660000;
+    display:flex;
+    justify-content:center;
+    gap:15px;
+    padding:10px;
+}
+
+nav button{
+    background:none;
+    border:none;
+    color:white;
+    cursor:pointer;
+}
+
+.page{
+    display:none;
+    padding:20px;
+}
+
+.active{
+    display:block;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+    gap:20px;
+}
+
+.card{
+    background:white;
+    color:black;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+.card img{
+    width:100%;
+    height:220px;
+    object-fit:cover;
+}
+
+.card-content{
+    padding:15px;
+}
+
+input,textarea{
+    width:100%;
+    padding:10px;
+    margin:5px 0 15px 0;
+    box-sizing:border-box;
+}
+
+#warning{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.8);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+}
+
+#warningBox{
+    background:white;
+    color:black;
+    padding:25px;
+    border-radius:10px;
+    max-width:500px;
+    text-align:center;
+}
+
+.admin-only{
+    display:none;
+}
+
+#articleView,
+#enemyView{
+    display:none;
+    background:white;
+    color:black;
+    padding:20px;
+    border-radius:10px;
+    margin-top:20px;
+}
 </style>
+
 </head>
+
 <body>
 
 <div id="warning">
 <div id="warningBox">
 <h2>注意</h2>
-<p>このサイトはフィクションです。実在の人物・団体とは関係ありません。</p>
-<button onclick="document.getElementById('warning').style.display='none'">同意する</button>
+<p>
+このサイトはフィクションです。<br>
+実在する人物・団体・組織とは関係ありません。
+</p>
+<button onclick="acceptWarning()">
+同意する
+</button>
 </div>
 </div>
 
 <header>
 <h1>米うさぎ赤軍</h1>
-<h2>最新の記事</h2>
 </header>
 
 <nav>
-<a href="#" onclick="showPage('home')">ホーム</a>
-<a href="#" onclick="showPage('post')">主席日記投稿</a>
-<a href="#" onclick="showPage('login')">ログイン</a>
+<button onclick="showPage('home')">ホーム</button>
+<button onclick="showPage('diary')">主席日記</button>
+<button onclick="showPage('enemy')">敵対組織</button>
+<button onclick="showPage('login')">ログイン</button>
 </nav>
 
 <section id="home" class="page active">
-<div id="articles" class="grid"></div>
+<h2>最新記事</h2>
+<div id="articleList" class="grid"></div>
 </section>
 
-<section id="post" class="page">
-<h2>記事投稿</h2>
-<div id="editor">
-<label>記事タイトル</label>
-<input id="title">
+<section id="diary" class="page">
 
-<label>投稿者名</label>
-<input id="author">
+<h2>主席日記投稿</h2>
 
-<label>日時</label>
-<input id="date" type="datetime-local">
+<div id="editor" class="admin-only">
 
-<label>内容</label>
+<label>タイトル</label> <input id="title">
+
+<label>投稿者</label> <input id="author">
+
+<label>画像URL</label> <input id="image">
+
+<label>本文</label>
+
 <textarea id="content" rows="10"></textarea>
 
-<button onclick="saveArticle()">投稿</button>
+<button onclick="saveArticle()">
+投稿
+</button>
+
 </div>
-<p id="loginNeed">ログインしてください。</p>
+
+<div id="articleView"></div>
+
+</section>
+
+<section id="enemy" class="page">
+
+<h2>敵対組織一覧</h2>
+
+<div id="enemyEditor" class="admin-only">
+
+<label>組織名</label> <input id="enemyName">
+
+<label>画像URL</label> <input id="enemyImage">
+
+<label>説明</label>
+
+<textarea id="enemyDescription"></textarea>
+
+<button onclick="saveEnemy()">
+登録
+</button>
+
+</div>
+
+<div id="enemyList" class="grid"></div>
+
+<div id="enemyView"></div>
+
 </section>
 
 <section id="login" class="page">
+
 <h2>ログイン</h2>
+
 <input id="user" placeholder="ユーザー名">
-<input id="pass" type="password" placeholder="パスワード">
-<button onclick="login()">ログイン</button>
-<p id="result"></p>
+
+<input id="pass"
+type="password"
+placeholder="パスワード">
+
+<button onclick="login()">
+ログイン
+</button>
+
+<p id="loginResult"></p>
+
 </section>
+<script type="module">
 
-<script>
-function showPage(id){
- document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
- document.getElementById(id).classList.add('active');
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+
+import {
+  getDatabase,
+  ref,
+  push,
+  onValue,
+  remove,
+  update
+} from "https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBnck9we-VfPoBN4lNhym01lQv9874OtE0",
+  authDomain: "friend-suzu.firebaseapp.com",
+  databaseURL: "https://friend-suzu-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "friend-suzu",
+  storageBucket: "friend-suzu.firebasestorage.app",
+  messagingSenderId: "623197944143",
+  appId: "1:623197944143:web:5648b421a278561bf32d3a"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+window.acceptWarning = function(){
+    document.getElementById("warning").style.display="none";
 }
 
-function login(){
- let u=document.getElementById('user').value;
- let p=document.getElementById('pass').value;
+window.showPage = function(page){
 
- if(u==='yeahbrouiui' && p==='0306'){
-   localStorage.setItem('loggedIn','yes');
-   document.getElementById('editor').style.display='block';
-   document.getElementById('loginNeed').style.display='none';
-   document.getElementById('result').innerText='ログイン成功';
- }else{
-   document.getElementById('result').innerText='ログイン失敗';
- }
+    document.querySelectorAll(".page").forEach(p=>{
+        p.classList.remove("active");
+    });
+
+    document.getElementById(page).classList.add("active");
 }
 
-function saveArticle(){
- let articles=JSON.parse(localStorage.getItem('articles')||'[]');
+window.login = function(){
 
- articles.unshift({
-   title:document.getElementById('title').value,
-   author:document.getElementById('author').value,
-   date:document.getElementById('date').value,
-   content:document.getElementById('content').value
- });
+    const user =
+      document.getElementById("user").value;
 
- localStorage.setItem('articles',JSON.stringify(articles));
- renderArticles();
+    const pass =
+      document.getElementById("pass").value;
+
+    if(
+      user === "yeahbrouiui" &&
+      pass === "0306"
+    ){
+
+      localStorage.setItem(
+        "loggedIn",
+        "true"
+      );
+
+      document
+      .querySelectorAll(".admin-only")
+      .forEach(e=>{
+        e.style.display="block";
+      });
+
+      document
+      .getElementById("loginResult")
+      .textContent="ログイン成功";
+
+    }else{
+
+      document
+      .getElementById("loginResult")
+      .textContent="ログイン失敗";
+    }
+};
+
+window.saveArticle = function(){
+
+    const article = {
+
+      title:
+      document.getElementById("title").value,
+
+      author:
+      document.getElementById("author").value,
+
+      image:
+      document.getElementById("image").value,
+
+      content:
+      document.getElementById("content").value,
+
+      createdAt:
+      new Date().toLocaleString()
+    };
+
+    if(window.currentEditId){
+
+      update(
+        ref(
+          db,
+          "articles/" +
+          window.currentEditId
+        ),
+        article
+      );
+
+      window.currentEditId = null;
+
+    }else{
+
+      push(
+        ref(db,"articles"),
+        article
+      );
+    }
+};
+
+window.saveEnemy = function(){
+
+    push(
+      ref(db,"enemies"),
+      {
+
+        name:
+        document.getElementById("enemyName").value,
+
+        image:
+        document.getElementById("enemyImage").value,
+
+        description:
+        document.getElementById("enemyDescription").value,
+
+        createdAt:
+        new Date().toLocaleString()
+      }
+    );
+};
+
+window.onload = function(){
+
+    if(
+      localStorage.getItem("loggedIn")
+      === "true"
+    ){
+
+      document
+      .querySelectorAll(".admin-only")
+      .forEach(e=>{
+        e.style.display="block";
+      });
+    }
+};
+onValue(
+ref(db,"articles"),
+(snapshot)=>{
+
+```
+const data =
+  snapshot.val() || {};
+
+let html = "";
+
+Object.entries(data)
+.reverse()
+.forEach(([id,item])=>{
+
+  html += `
+  <div class="card">
+
+    <img
+    src="${item.image}"
+    onerror="this.style.display='none'">
+
+    <div class="card-content">
+
+      <h3>${item.title}</h3>
+
+      <p>
+      投稿者:
+      ${item.author}
+      </p>
+
+      <p>
+      ${item.createdAt}
+      </p>
+
+      <p>
+      ${item.content.substring(0,100)}
+      ...
+      </p>
+
+      <button
+      onclick="readArticle('${id}')">
+      続きを読む
+      </button>
+
+      <button
+      onclick="editArticle('${id}')">
+      編集
+      </button>
+
+      <button
+      onclick="deleteArticle('${id}')">
+      削除
+      </button>
+
+    </div>
+
+  </div>
+  `;
+});
+
+document
+.getElementById("articleList")
+.innerHTML = html;
+```
+
 }
+);
 
-function renderArticles(){
- let articles=JSON.parse(localStorage.getItem('articles')||'[]');
- let html='';
+window.readArticle = function(id){
 
- articles.forEach(a=>{
-   let shortText=a.content.substring(0,120);
+onValue(
+ref(db,"articles/"+id),
+(snapshot)=>{
 
-   html+=`
-   <div class="article">
-      <h3>${a.title}</h3>
-      <b>投稿者: ${a.author}</b><br>
-      <b>${a.date}</b><br><br>
-      ${shortText}...
-   </div>`;
- });
+```
+  const item =
+    snapshot.val();
 
- document.getElementById('articles').innerHTML=html;
+  const view =
+    document.getElementById(
+      "articleView"
+    );
+
+  view.style.display =
+    "block";
+
+  view.innerHTML = `
+
+  <h2>
+  ${item.title}
+  </h2>
+
+  <p>
+  投稿者:
+  ${item.author}
+  </p>
+
+  <p>
+  ${item.createdAt}
+  </p>
+
+  <img
+  src="${item.image}"
+  style="
+  width:100%;
+  max-width:700px;
+  ">
+
+  <hr>
+
+  <p>
+  ${item.content}
+  </p>
+  `;
+},
+{onlyOnce:true}
+```
+
+);
+};
+
+window.editArticle = function(id){
+
+onValue(
+ref(db,"articles/"+id),
+(snapshot)=>{
+
+```
+  const item =
+    snapshot.val();
+
+  document
+  .getElementById("title")
+  .value = item.title;
+
+  document
+  .getElementById("author")
+  .value = item.author;
+
+  document
+  .getElementById("image")
+  .value = item.image;
+
+  document
+  .getElementById("content")
+  .value = item.content;
+
+  window.currentEditId = id;
+
+  showPage("diary");
+},
+{onlyOnce:true}
+```
+
+);
+};
+
+window.deleteArticle = function(id){
+
+if(
+confirm(
+"この記事を削除しますか？"
+)
+){
+
+```
+remove(
+  ref(db,"articles/"+id)
+);
+```
+
 }
+};
 
-window.onload=function(){
- renderArticles();
+onValue(
+ref(db,"enemies"),
+(snapshot)=>{
 
- if(localStorage.getItem('loggedIn')==='yes'){
-   document.getElementById('editor').style.display='block';
-   document.getElementById('loginNeed').style.display='none';
- }
+```
+const data =
+  snapshot.val() || {};
+
+let html = "";
+
+Object.entries(data)
+.reverse()
+.forEach(([id,item])=>{
+
+  html += `
+  <div class="card">
+
+  <img
+  src="${item.image}"
+  onerror="this.style.display='none'">
+
+  <div class="card-content">
+
+  <h3>
+  ${item.name}
+  </h3>
+
+  <p>
+  ${item.description}
+  </p>
+
+  </div>
+
+  </div>
+  `;
+});
+
+document
+.getElementById("enemyList")
+.innerHTML = html;
+```
+
 }
+);
+
 </script>
 
 </body>
 </html>
+
