@@ -7,10 +7,11 @@ from flask import Flask, request, jsonify, render_template_string, Response
 app = Flask(__name__)
 app.secret_key = "nijinohara-secret-key"
 
+# 管理者ログイン情報
 ADMIN_USER = "kaitojpjp"
 ADMIN_PASS = "nijinohara1212"
 
-# Vercelで書き込み可能な一時フォルダ(/tmp)を指定
+# Vercelの一時ディレクトリ(/tmp)内にデータベースを作成
 DB_NAME = "/tmp/lottery.db"
 
 def init_db():
@@ -36,7 +37,6 @@ def init_db():
     conn.commit()
     conn.close()
 
-# リクエストの度にDB初期化を確認
 @app.before_request
 def ensure_db():
     init_db()
@@ -50,6 +50,7 @@ def authenticate():
         {'WWW-Authenticate': 'Basic realm="Login Required"'}
     )
 
+# --- フロントエンド HTML ---
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ja">
@@ -232,6 +233,13 @@ ADMIN_TEMPLATE = """
 </body>
 </html>
 """
+
+# --- ルーティング ---
+
+# ファビコン要求のエラー防止
+@app.route('/favicon.ico')
+def favicon():
+    return '', 204
 
 @app.route('/')
 def index():
