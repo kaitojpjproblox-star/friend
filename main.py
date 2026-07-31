@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
-
 import sqlite3
 import random
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from flask import Flask, request, jsonify, render_template_string, Response
+from flask import Flask, request, jsonify, render_template_string, Response, redirect
 
 app = Flask(__name__)
 app.secret_key = "nijinohara-secret-key"
@@ -210,25 +209,38 @@ ADMIN_TEMPLATE = """
         table { width: 100%; border-collapse: collapse; margin-top: 20px; background: rgba(255,255,255,0.05); }
         th, td { padding: 10px; border: 1px solid #333; text-align: left; }
         .btn-draw { background: #10B981; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 5px; }
+        .btn-delete { background: #EF4444; color: white; border: none; padding: 5px 12px; cursor: pointer; border-radius: 4px; font-size: 0.85rem; }
+        .btn-delete:hover { background: #DC2626; }
     </style>
 </head>
 <body>
     <h2>管理ダッシュボード</h2>
     <p>現在の参加人数: {{ participants|length }} 名</p>
 
-    <form action="/admin/draw" method="POST" onsubmit="return confirm('抽選を実行しますか？');">
+    <form action="/admin/draw" method="POST" onsubmit="return confirm('抽選を実行しますか？');" style="margin-bottom: 25px;">
         <button type="submit" class="btn-draw">抽選（再抽選）を実行する</button>
     </form>
 
     <h3>参加者一覧</h3>
     <table>
-        <tr><th>ID</th><th>Robloxネーム</th><th>参加日時</th><th>IPアドレス</th></tr>
+        <tr>
+            <th>ID</th>
+            <th>Robloxネーム</th>
+            <th>参加日時</th>
+            <th>IPアドレス</th>
+            <th>操作</th>
+        </tr>
         {% for p in participants %}
         <tr>
             <td>{{ p[0] }}</td>
             <td>{{ p[1] }}</td>
             <td>{{ p[2] }}</td>
             <td>{{ p[3] }}</td>
+            <td>
+                <form action="/admin/delete/{{ p[0] }}" method="POST" onsubmit="return confirm('「{{ p[1] }}」さんをリストから削除しますか？');" style="display:inline;">
+                    <button type="submit" class="btn-delete">削除</button>
+                </form>
+            </td>
         </tr>
         {% endfor %}
     </table>
@@ -238,7 +250,6 @@ ADMIN_TEMPLATE = """
 
 # --- ルーティング ---
 
-# ファビコン要求のエラー防止
 @app.route('/favicon.ico')
 def favicon():
     return '', 204
@@ -298,6 +309,21 @@ def admin():
     conn.close()
 
     return render_template_string(ADMIN_TEMPLATE, participants=participants)
+
+# メンバー削除用ルート
+@app.route('/admin/delete/<int:participant_id>', methods=['POST'])
+def admin_delete(participant_id):
+    auth_info = request.authorization
+    if not auth_info or not check_admin_auth(auth_info.username, auth_info.password):
+        return authenticate()
+
+    conn = sqlite3.connect(DB_NAME)
+    cur = conn.cursor()
+    cur.execute("DELETE FROM participants WHERE id = ?", (participant_id,))
+    conn.commit()
+    conn.close()
+
+    return redirect('/admin')
 
 @app.route('/admin/draw', methods=['POST'])
 def admin_draw():
