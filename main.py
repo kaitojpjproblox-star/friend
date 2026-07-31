@@ -7,11 +7,10 @@ from flask import Flask, request, jsonify, render_template_string, Response
 app = Flask(__name__)
 app.secret_key = "nijinohara-secret-key"
 
-# 管理者認証情報
 ADMIN_USER = "kaitojpjp"
 ADMIN_PASS = "nijinohara1212"
 
-# Vercelの一時ディレクトリ(/tmp)内にデータベースを作成
+# Vercelで書き込み可能な一時フォルダ(/tmp)を指定
 DB_NAME = "/tmp/lottery.db"
 
 def init_db():
@@ -37,7 +36,7 @@ def init_db():
     conn.commit()
     conn.close()
 
-# リクエストごとにDB構造を確認・初期化
+# リクエストの度にDB初期化を確認
 @app.before_request
 def ensure_db():
     init_db()
@@ -51,7 +50,6 @@ def authenticate():
         {'WWW-Authenticate': 'Basic realm="Login Required"'}
     )
 
-# --- フロントエンド HTML ---
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html lang="ja">
@@ -213,7 +211,7 @@ ADMIN_TEMPLATE = """
 </head>
 <body>
     <h2>管理ダッシュボード</h2>
-    <p>現在のセッション参加人数: {{ participants|length }} 名</p>
+    <p>現在の参加人数: {{ participants|length }} 名</p>
 
     <form action="/admin/draw" method="POST" onsubmit="return confirm('抽選を実行しますか？');">
         <button type="submit" class="btn-draw">抽選（再抽選）を実行する</button>
@@ -234,8 +232,6 @@ ADMIN_TEMPLATE = """
 </body>
 </html>
 """
-
-# --- ルーティング ---
 
 @app.route('/')
 def index():
@@ -321,6 +317,3 @@ def admin_draw():
     conn.commit()
     conn.close()
     return "抽選が完了しました。<a href='/admin'>管理画面へ戻る</a>"
-
-# Vercelエントリーポイント用
-app = app
