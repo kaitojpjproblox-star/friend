@@ -1,8 +1,15 @@
 # -*- coding: utf-8 -*-
 import random
+import logging
+import sys
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from flask import Flask, render_template_string, jsonify, request
 
 app = Flask(__name__)
+
+# --- ログ設定（標準出力に出力することでVercelのRuntime Logsに反映） ---
+logging.basicConfig(stream=sys.stdout, level=logging.INFO, format='%(message)s')
 
 # --- 設定 ---
 # 当選確率 (例: 0.20 = 20%の確率で当たる)
@@ -121,7 +128,7 @@ HTML_TEMPLATE = """
                 resultBox.className = 'result-box win';
                 document.getElementById('resultTitle').innerText = '🎉 おめでとうございます！';
                 document.getElementById('resultText').innerText = `${data.name} 様、当選しました！`;
-                dmNotice.style.display = 'block'; // 当選時のみDM指示を表示
+                dmNotice.style.display = 'block';
             } else {
                 resultBox.className = 'result-box lose';
                 document.getElementById('resultTitle').innerText = '😭 残念...';
@@ -147,8 +154,17 @@ def draw():
     data = request.get_json()
     name = data.get('roblox_name', 'ゲスト').strip()
 
+    # 接続元IPと日時
+    ip_address = request.headers.get('X-Forwarded-For', request.remote_addr)
+    now_str = datetime.now(ZoneInfo("Asia/Tokyo")).strftime('%Y-%m-%d %H:%M:%S')
+
     # 確率判定
     is_win = random.random() < WIN_RATE
+    result_str = "【当選】" if is_win else "【落選】"
+
+    # Vercelのログに出力
+    log_msg = f"[LOTTERY LOG] {now_str} | 結果: {result_str} | Roblox名: {name} | IP: {ip_address}"
+    app.logger.info(log_msg)
 
     return jsonify({
         'name': name,
